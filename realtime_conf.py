@@ -1004,9 +1004,13 @@ def confPm4lw(mslpMean, mslpStd, time, run, day):
                             if z in range (44,49):
                                 testarray[t,x,:,:] = mean630[x,:,:]
                         boxbin[x,y,z] = spread630[x,y,z]
+                        if mCliZScore > 3:
+                            print x, y, z
                     else:
                         for q in range (-2,3):
                             for w in range (-2,3):
+                                if mCliZScore > 3:
+                                    print x, y, z
                                 if y in range (15,20):
                                     if z in range (44,49):
                                         testarray[t,x,:,:] = mean630[x,:,:]
@@ -1049,7 +1053,8 @@ def confPm4lw(mslpMean, mslpStd, time, run, day):
             
         forecastSprdGrid = np.array(forecastSprdGrid)            
         gradanomaly = (forecastSprdGrid[t,:,:]-gradMCliMean[:,:])/gradMCliStd[:,:]                  
-        meananomaly = (forecastMeanGrid[t,:,:] - np.mean(mean630,axis=0))/np.std(mean630,axis=0)   
+        meananomaly = (forecastMeanGrid[t,:,:] - np.mean(mean630,axis=0))/np.std(mean630,axis=0)
+        gradientAnomaly = (rtgm-np.mean(gm,axis=0))/np.std(gm,axis=0)   
         spreadz = (forecastSprdGrid[t,:,:] - np.mean(spread630,axis=0))/np.std(spread630,axis=0)         
         confPlot = (forecastSprdGrid[t,:,:] - mCliMean)/mCliStd                                 
 
@@ -1057,7 +1062,10 @@ def confPm4lw(mslpMean, mslpStd, time, run, day):
         confPlot = np.array(confPlot)
         for x in range (0,30):
             for y in range (0,63):
+                
                 lwMap[x,y] = gradanomaly[x,y]*(gradanomaly[x,y]/(gradanomaly[x,y]+confPlot[x,y])) + confPlot[x,y]*(confPlot[x,y]/(gradanomaly[x,y]+confPlot[x,y]))
+                if lwMap[x,y] > 10 or lwMap[x,y] < -10:
+                    print x, y, lwMap[x,y], gradanomaly[x,y], confPlot[x,y]
         '''for l in range (0,30):
             for m in range (0,63):
                 if np.isnan(confPlot[l,m]) == True:
@@ -1138,12 +1146,12 @@ def confPm4lw(mslpMean, mslpStd, time, run, day):
         m3.drawcoastlines()
         m3.drawstates()
         
-        ax5.set_title('Gradient')
+        ax5.set_title('Standardized Gradient Anomaly')
         m4 = Basemap(llcrnrlon=265,llcrnrlat=lats.min(),urcrnrlon=lons.max(),urcrnrlat=lats.max(),projection='cyl',resolution='i',ax=ax5)
         x,y = m4(*np.meshgrid(lons,lats))
         
-        z0 = m4.contourf(x,y,rtgm/100,np.linspace(0,20,num=20),cmap=anomcmap2)
-        cbar=m4.colorbar(z0,ticks=np.linspace(0,20,num=11),location='bottom',pad='5%')
+        z0 = m4.contourf(x,y,gradientAnomaly,tick_nums_SA,cmap=anomcmap)
+        cbar=m4.colorbar(z0,ticks=np.linspace(-8,8,num=9),location='bottom',pad='5%')
         z1 = m4.contour(x,y,forecastMeanGrid[t,:,:]/100,levels=mslspace,colors='k',linewidths=1)
         plt.clabel(z1, fontsize=10, inline_spacing=-0.5,fmt='%3.0f')
         cbar.set_label('hPa')
